@@ -1,13 +1,13 @@
-const int note0 = A0;
 const int ledPin = LED_BUILTIN;
 
 int value;
 int notes;
 
 void setup() {
-  pinMode(ledPin, OUTPUT);
-  pinMode(note0
-  , INPUT);
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
   Serial.begin(9600);
   Serial.println("setup");
 }
@@ -16,15 +16,17 @@ void loop() {
 
   notes=0;
   
-  value=analogRead(note0);
-  Serial.print("a0_");
-  Serial.println(value);
-  if (value>600) {
-    digitalWrite(ledPin, LOW);
-  }
-  else {
-    digitalWrite(ledPin, HIGH);
+  if (analogRead(A0)<600) {
     notes+=1;
+  }
+  if (analogRead(A1)<600) {
+    notes+=2;
+  }
+  if (analogRead(A2)<600) {
+    notes+=4;
+  }
+  if (analogRead(A3)<600) {
+    notes+=8;
   }
   
   Serial.print("notes");

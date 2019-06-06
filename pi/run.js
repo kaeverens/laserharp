@@ -1,3 +1,9 @@
+const config = {
+	FLUIDSYNTH_HOST: '127.0.0.1',
+	FLUIDSYNTH_PORT: 9800,
+	FLUIDSYNTH_TIMEOUT: 1500
+}
+
 const AudioPlayer = require('sox-play');
 
 const SerialPort = require('serialport');
@@ -12,10 +18,13 @@ const parser = port.pipe(new Readline({
 	delimiter: '\r\n'
 }))
 
+const NetcatClient = require('netcat/client');
+let nc = new NetcatClient();
+
 var notes=[0], oldNotes=[0];
-var noteFiles=[
-	'c4', 'c+4'
-]
+var midi=[
+	'0 66', '0 67'
+];
 var notesPlaying={};
 function playNote(note) {
 	if (notesPlaying[note]) {
@@ -29,13 +38,38 @@ function playNote(note) {
 		delete notesPlaying[note];
 	});
 }
+nc
+	.addr(config.FLUIDSYNTH_HOST)
+	.port(config.FLUIDSYNTH_PORT)
+	.wait(99999999)
+	.retry(1000)
+	.connect()
+	.on('data', console.log)
+	.on('close', e=>{
+		console.log('nc client closed ', e);
+	})
+	.on('waitTimeout', e=>{
+		console.log('nc client timed out ', e);
+	})
+	.on('connect', e=>{
+		console.log('nc client connected ', e);
+	})
+	.on('error', e=>{
+		console.log('nc client error ', e);
+	});
 function playNotes() {
-	console.log(notes);
+//	console.log(notes);
 	for (var i=0;i<8;++i) {
 		if (Math.pow(2, i)&notes[0] && !(Math.pow(2, i)&oldNotes[0])) {
-			console.log('playing note', i);
-			playNote(noteFiles[i]);
+			if (!midi[i]) {
+					continue;
+			}
+			console.log('noteon '+midi[i]+' 100');
+			var cmd='noteoff '+midi[i]+'\nnoteon '+midi[i]+' 100\n';
+			nc
+				.send(cmd, e=>console.log);
 		}
+	;
 	}
 	notes.forEach((v, k)=>{
 		oldNotes[k]=v;
